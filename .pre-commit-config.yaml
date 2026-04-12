@@ -1,0 +1,22 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.8
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: '\.env\.example$'
+
+  - repo: local
+    hooks:
+      - id: no-secrets-in-code
+        name: Check for hardcoded API keys
+        entry: bash -c 'grep -rn "sk-[a-zA-Z0-9]" --include="*.py" src/ && exit 1 || exit 0'
+        language: system
+        pass_filenames: false

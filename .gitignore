@@ -1,0 +1,37 @@
+# Environment
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Data
+data/*.db
+data/*.sqlite
+data/audio/
+data/transcripts/
+*.wav
+*.mp3
+*.flac
+*.m4a
+
+# Eval results (regenerated)
+evaluations/results/*.json
+evaluations/results/*.csv
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Secrets
+.secrets.baseline

@@ -1,0 +1,36 @@
+{
+  "call_id": "2020-09-15-20-23-12_a0229647-2133-4c2f-a2ae-9b2ef08cc709_v2JY5dK-1s1kzXDEDd-38IwHwk_KOgQrLG55DkRgIkC2lPBH_TeyILoA",
+  "audio_file": null,
+  "domain": "Auto Insurance Support",
+  "reference_transcript": "[00:03] This call may be recorded for quality assurance.\n[00:11] Hi, this is [PERSON_NAME] with [ORGANIZATION], and it looks like you were connected to me to compare rates on auto insurance today.\n[00:16] Correct. I'm looking for some guys that's giving away free codes today.\n[00:25] Okay, well, sir, we're not affiliated with that, but I can't give you a free quote.\n[00:31] Okay, what kind of code?\n[00:34] No, a quote. What you gonna quote me?\n[00:39] Oh, well, it looks like you were connected to me for auto insurance today.\n[00:47] Oh, well, I've already got auto.\n[00:51] All right, sir, well, this is solid quote.\n[00:53] And we are affiliated with several of the top national carriers, so let's see if we can find you some statements today.\n[00:59] Okay. Hello? Okay, so in order for me to connect you to the right [OCCUPATION], I need to quickly verify some of your information.\n[01:12] May I have your name, please?\n[01:15] That's [PERSON_NAME]. And, [PERSON_NAME], what is your last name?\n[01:21] [PERSON_NAME]. All right. And who is your current auto insurance provider?\n[01:28] That's our [ORGANIZATION] man.\n[01:32] Okay, and what is your zip code?\n[01:35] [LOCATION]. Okay, you said [ORGANIZATION].\n[01:42] How long have you been insured with [ORGANIZATION]?\n[01:47] [DURATION] [DURATION]. All right.\n[01:50] And do you own your home, sir?\n[01:54] What's that got to do with.\n[01:57] Well, we do offer home.\n[02:00] We do offer home and auto insurance together if you would like to receive a free quote.\n[02:08] Okay, so we're going to go ahead and finish taking these questions in, and I'll get you over to a [OCCUPATION] [OCCUPATION] who can provide you with that answer.\n[02:19] Okay? Okay. Can you please confirm your date of birth?\n[02:28] [DATE_OF_BIRTH] [DATE_OF_BIRTH], [DATE_OF_BIRTH]. All right.\n[02:35] In the past [DURATION] [DURATION], have you had any DUIs, SR22s, or at fall accidents?\n[02:42] Oh, no, I don't drink when I'm driving.\n[02:46] Okay. And have you had two or more tickets in the past [DURATION] [DURATION]?\n[02:54] Oh, no, I don't get no ticket.\n[02:57] And have you or your [MARITAL_STATUS] ever honorably served in [ORGANIZATION] [ORGANIZATION] [ORGANIZATION]?\n[03:03] Not yet. Not yet.\n[03:07] All right. All right.\n[03:09] Thank you, [PERSON_NAME]. That is all the information that I need.\n[03:14] I'm searching now for your best match.\n[03:16] Also, while your consent is not required to receive a quote, may we have your permission to send you an automatic text message to this number to ensure that you are satisfied with the coverage options you receive and to provide you with other quote options?\n[03:31] No, I don't need no text, ma' am.\n[03:34] Not a problem. One moment, please.\n[03:40] All right, [PERSON_NAME], this should take [DURATION] [DURATION] [DURATION] [DURATION] to go over the coverage options available.\n[03:45] One moment while I connect you.\n[03:50] Please stay on the line while we connect you.\n[04:11] You have been kicked from this conference.\n[04:12] Okay. Thank you.",
+  "reference_summary": "Auto Insurance Support call. Duration: 254s. Transcription confidence: 0.961. Word count: 463.",
+  "reference_key_points": [
+    "Domain: Auto Insurance Support",
+    "Call duration: 254 seconds"
+  ],
+  "reference_entities": [],
+  "reference_resolution_status": "unresolved",
+  "qa_scores": {
+    "professionalism": 4,
+    "empathy": 3,
+    "problem_resolution": 3,
+    "compliance": 4,
+    "communication_clarity": 4,
+    "overall": 3.6
+  },
+  "qa_justifications": {
+    "professionalism": "Agent followed standard greeting protocol.",
+    "empathy": "Baseline score \u2014 requires human review.",
+    "problem_resolution": "Baseline score \u2014 requires human review.",
+    "compliance": "Standard procedures observed.",
+    "communication_clarity": "Communication was generally clear."
+  },
+  "has_compliance_violation": false,
+  "compliance_violations": [],
+  "annotator_notes": "Auto-generated from AIxBlock dataset. Domain: Auto Insurance Support. ASR confidence: 0.961. Learner should review and refine these scores.",
+  "source_dataset": "AIxBlock/92k-real-world-call-center-scripts-english",
+  "raw_text": "This call may be recorded for quality assurance. Hi, this is [PERSON_NAME] with [ORGANIZATION], and it looks like you were connected to me to compare rates on auto insurance today. Correct. I'm looking for some guys that's giving away free codes today. Okay, well, sir, we're not affiliated with that, but I can't give you a free quote. Okay, what kind of code? No, a quote. What you gonna quote me? Oh, well, it looks like you were connected to me for auto insurance today. Oh, well, I've already got auto. All right, sir, well, this is solid quote. And we are affiliated with several of the top national carriers, so let's see if we can find you some statements today. Okay. Hello? Okay, so in order for me to connect you to the right [OCCUPATION], I need to quickly verify some of your information. May I have your name, please? That's [PERSON_NAME]. And, [PERSON_NAME], what is your last name? [PERSON_NAME]. All right. And who is your current auto insurance provider? That's our [ORGANIZATION] man. Okay, and what is your zip code? [LOCATION]. Okay, you said [ORGANIZATION]. How long have you been insured with [ORGANIZATION]? [DURATION] [DURATION]. All right. And do you own your home, sir? What's that got to do with. Well, we do offer home. We do offer home and auto insurance together if you would like to receive a free quote. Okay, so we're going to go ahead and finish taking these questions in, and I'll get you over to a [OCCUPATION] [OCCUPATION] who can provide you with that answer. Okay? Okay. Can you please confirm your date of birth? [DATE_OF_BIRTH] [DATE_OF_BIRTH], [DATE_OF_BIRTH]. All right. In the past [DURATION] [DURATION], have you had any DUIs, SR22s, or at fall accidents? Oh, no, I don't drink when I'm driving. Okay. And have you had two or more tickets in the past [DURATION] [DURATION]? Oh, no, I don't get no ticket. And have you or your [MARITAL_STATUS] ever honorably served in [ORGANIZATION] [ORGANIZATION] [ORGANIZATION]? Not yet. Not yet. All right. All right. Thank you, [PERSON_NAME]. That is all the information that I need. I'm searching now for your best match. Also, while your consent is not required to receive a quote, may we have your permission to send you an automatic text message to this number to ensure that you are satisfied with the coverage options you receive and to provide you with other quote options? No, I don't need no text, ma' am. Not a problem. One moment, please. All right, [PERSON_NAME], this should take [DURATION] [DURATION] [DURATION] [DURATION] to go over the coverage options available. One moment while I connect you. Please stay on the line while we connect you. You have been kicked from this conference. Okay. Thank you.",
+  "word_count": 463,
+  "audio_duration_seconds": 254,
+  "asr_confidence": 0.9609866
+}

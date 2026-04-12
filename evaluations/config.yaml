@@ -1,0 +1,26 @@
+thresholds:
+  transcription:
+    wer: 0.15          # Word Error Rate < 15%
+    der: 0.20          # Diarization Error Rate < 20%
+  summary:
+    rouge_l: 0.45      # ROUGE-L > 0.45
+    bertscore_f1: 0.80  # BERTScore F1 > 0.80
+    schema_pass_rate: 0.95  # > 95% valid Pydantic outputs
+  qa_scoring:
+    mae: 0.8           # Mean Absolute Error < 0.8 per dimension
+    spearman_rho: 0.7  # Spearman correlation > 0.7
+    compliance_recall: 0.90  # Compliance flag recall > 90%
+  correlation:
+    cohens_kappa: 0.6  # LLM-judge vs Human Cohen's kappa > 0.6
+
+llm_judge:
+  model: "claude-sonnet-4-20250514"  # Must differ from primary (GPT-4o)
+  dimensions:
+    - factual_consistency
+    - completeness
+    - conciseness
+    - actionability
+
+ground_truth:
+  min_annotated_calls: 25
+  directory: "evaluations/ground_truth/"
