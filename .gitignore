@@ -18,20 +18,26 @@ data/*.sqlite
 data/audio/
 data/transcripts/
 *.wav
-*.mp3
 *.flac
 *.m4a
 
-# Eval results (regenerated)
-evaluations/results/*.json
-evaluations/results/*.csv
+# Sample dataset is tracked (override *.mp3 for this dir)
+!data/samples/
+!data/samples/*.mp3
 
-# IDE
+# Plan docs (generated)
+docs/superpowers/
+
+# IDE / Tools
 .vscode/
 .idea/
+.claude/
 
 # OS
 .DS_Store
+
+# Worktrees
+.worktrees/
 
 # Secrets
 .secrets.baseline

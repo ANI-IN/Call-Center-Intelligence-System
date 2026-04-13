@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from io import BytesIO
+from pathlib import Path
 
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
@@ -37,15 +38,21 @@ def compile_report(
     )
 
 
-def persist_report(report: CallReport, db_path: str, encryption_key: str | None) -> None:
-    engine = get_engine(db_path, encryption_key)
-    init_db(engine)
+def persist_report(
+    report: CallReport,
+    db_path: str | None = None,
+    encryption_key: str | None = None,
+    engine=None,
+) -> None:
+    if engine is None:
+        engine = get_engine(db_path, encryption_key)
+        init_db(engine)
     session = get_session(engine)
     try:
         record = CallRecord(
             call_id=str(report.call_id),
             status=report.status,
-            audio_filename=report.intake.audio_path,
+            audio_filename=Path(report.intake.audio_path).name if report.intake.audio_path else "",
             transcript_text=report.transcription.full_text,
             summary_json=report.summary.model_dump_json(),
             qa_scores_json=report.qa_scores.model_dump_json(),

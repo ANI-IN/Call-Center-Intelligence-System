@@ -3,18 +3,7 @@ from datetime import datetime
 
 import pytest
 
-from src.database.connection import get_engine, get_session, init_db
 from src.database.models import AuditLogEntry, CallRecord
-
-
-@pytest.fixture
-def db_session(tmp_path):
-    db_path = tmp_path / "test.db"
-    engine = get_engine(str(db_path), encryption_key=None)
-    init_db(engine)
-    session = get_session(engine)
-    yield session
-    session.close()
 
 
 @pytest.mark.integration

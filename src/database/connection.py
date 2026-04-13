@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Generator
+from contextlib import contextmanager
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
@@ -37,6 +39,25 @@ def init_db(engine: Engine) -> None:
     Base.metadata.create_all(engine)
 
 
+_session_factories: dict[int, sessionmaker] = {}
+
+
 def get_session(engine: Engine) -> Session:
-    session_factory = sessionmaker(bind=engine)
-    return session_factory()
+    engine_id = id(engine)
+    if engine_id not in _session_factories:
+        _session_factories[engine_id] = sessionmaker(bind=engine)
+    return _session_factories[engine_id]()
+
+
+@contextmanager
+def session_scope(engine: Engine) -> Generator[Session, None, None]:
+    """Context manager that auto-commits on success, rolls back on error, always closes."""
+    session = get_session(engine)
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()

@@ -34,3 +34,12 @@ class AuditLogEntry(Base):
     user = Column(String(100), nullable=False)
     timestamp = Column(DateTime, nullable=False, default=datetime.now)
     details = Column(Text, nullable=True)
+
+
+class TranscriptionCache(Base):
+    __tablename__ = "transcription_cache"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    audio_hash = Column(String(64), unique=True, nullable=False, index=True)
+    transcription_json = Column(Text, nullable=False)
+    created_at = Column(DateTime, nullable=False, default=datetime.now)

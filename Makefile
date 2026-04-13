@@ -1,14 +1,11 @@
-.PHONY: install download-data test lint format typecheck run eval eval-transcription eval-summary eval-qa eval-judge eval-correlation clean
+.PHONY: install test test-integration test-security test-all lint format typecheck run clean
 
 install:
 	pip install -e ".[dev]"
 	pre-commit install
 
-download-data:
-	python scripts/download_dataset.py
-
 test:
-	pytest tests/unit/ -v
+	pytest tests/unit/ tests/security/ -v
 
 test-integration:
 	pytest tests/integration/ -v -m integration
@@ -20,12 +17,12 @@ test-all:
 	pytest tests/ -v
 
 lint:
-	ruff check src/ tests/
-	ruff format --check src/ tests/
+	ruff check src/ tests/ app.py
+	ruff format --check src/ tests/ app.py
 
 format:
-	ruff check --fix src/ tests/
-	ruff format src/ tests/
+	ruff check --fix src/ tests/ app.py
+	ruff format src/ tests/ app.py
 
 typecheck:
 	mypy src/
@@ -35,24 +32,6 @@ secret-scan:
 
 run:
 	python app.py
-
-eval:
-	python -m src.evaluation.run_eval --all
-
-eval-transcription:
-	python -m src.evaluation.run_eval --transcription
-
-eval-summary:
-	python -m src.evaluation.run_eval --summary
-
-eval-qa:
-	python -m src.evaluation.run_eval --qa
-
-eval-judge:
-	python -m src.evaluation.run_eval --judge
-
-eval-correlation:
-	python -m src.evaluation.run_eval --correlation
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} +

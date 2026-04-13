@@ -1,40 +1,17 @@
-import uuid
 from unittest.mock import MagicMock, patch
 
 from src.agents.transcription import run_transcription
-from src.graph.state import (
-    AudioProperties,
-    IntakeResult,
-    PIIScanResult,
-    TranscriptionResult,
-)
+from src.graph.state import TranscriptionResult
+from tests.conftest import make_intake_result
 
 
-def _make_intake_result(
-    audio_path: str = "/tmp/test.wav",
-) -> IntakeResult:
-    return IntakeResult(
-        call_id=uuid.uuid4(),
-        audio_path=audio_path,
-        audio_properties=AudioProperties(
-            duration_seconds=10.0,
-            sample_rate=16000,
-            channels=1,
-            format="wav",
-            file_size_bytes=320000,
-        ),
-        pii_scan=PIIScanResult(pii_detected=False, redacted_fields=[]),
-        validation_passed=True,
-        validation_error=None,
-    )
-
-
-def _make_mock_segment(text, start, end, avg_logprob=-0.1):
+def _make_mock_segment(text, start, end, avg_logprob=-0.1, no_speech_prob=0.05):
     seg = MagicMock()
     seg.text = text
     seg.start = start
     seg.end = end
     seg.avg_logprob = avg_logprob
+    seg.no_speech_prob = no_speech_prob
     return seg
 
 
@@ -52,7 +29,7 @@ class TestRunTranscription:
             mock_info,
         )
 
-        intake = _make_intake_result()
+        intake = make_intake_result()
         result = run_transcription(intake, confidence_threshold=0.3, halt_ratio=0.8)
 
         assert isinstance(result, TranscriptionResult)
@@ -65,15 +42,15 @@ class TestRunTranscription:
         mock_model = MagicMock()
         mock_get_model.return_value = mock_model
 
-        seg1 = _make_mock_segment("mumble", 0.0, 1.0, -2.0)
-        seg2 = _make_mock_segment("mumble", 1.0, 2.0, -2.5)
+        seg1 = _make_mock_segment("mumble", 0.0, 1.0, -2.0, no_speech_prob=0.8)
+        seg2 = _make_mock_segment("mumble", 1.0, 2.0, -2.5, no_speech_prob=0.9)
         mock_info = MagicMock()
         mock_model.transcribe.return_value = (
             iter([seg1, seg2]),
             mock_info,
         )
 
-        intake = _make_intake_result()
+        intake = make_intake_result()
         result = run_transcription(intake, confidence_threshold=0.3, halt_ratio=0.5)
 
         assert result.flagged_for_review is True

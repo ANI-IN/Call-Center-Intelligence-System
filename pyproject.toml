@@ -1,7 +1,7 @@
 [project]
 name = "call-center-intelligence"
-version = "0.1.0"
-description = "Production call center intelligence system with multi-agent LangGraph pipeline"
+version = "0.2.0"
+description = "AI-powered call center intelligence system with multi-agent LangGraph pipeline"
 requires-python = ">=3.11"
 dependencies = [
     "langgraph==0.4.1",
@@ -10,24 +10,15 @@ dependencies = [
     "langsmith==0.3.42",
     "openai==1.82.0",
     "gradio==5.29.0",
-    "faster-whisper",
+    "faster-whisper==1.2.1",
     "pydantic==2.11.3",
     "sqlalchemy==2.0.41",
-    "sqlcipher3==0.5.4",
-    "presidio-analyzer==2.2.362",
-    "presidio-anonymizer==2.2.362",
     "python-dotenv==1.1.0",
     "reportlab==4.4.0",
-    "jiwer==3.1.0",
-    "rouge-score==0.1.2",
-    "bert-score==0.3.13",
-    "scipy==1.15.3",
-    "scikit-learn==1.6.1",
-    "python-magic==0.4.27",
-    "huggingface-hub==0.32.2",
-    "python-docx",
-    "datasets",
-    "soundfile",
+    "soundfile==0.13.1",
+    "mutagen==1.47.0",
+    "langchain-google-genai==2.1.4",
+    "langchain-groq==0.3.2",
 ]
 
 [project.optional-dependencies]

@@ -4,6 +4,10 @@ import io
 import wave
 from dataclasses import dataclass
 
+from mutagen.flac import FLAC
+from mutagen.mp3 import MP3
+from mutagen.mp4 import MP4
+
 from src.graph.state import AudioProperties
 
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50MB
@@ -71,8 +75,20 @@ def extract_audio_properties(data: bytes, fmt: str) -> AudioProperties:
                 format=fmt,
                 file_size_bytes=len(data),
             )
-        # For non-wav formats, use mutagen or ffprobe in production.
-        # Minimal fallback for mp3/flac/m4a:
+        # For non-wav formats, use mutagen to extract real properties.
+        buf = io.BytesIO(data)
+        mutagen_classes = {"mp3": MP3, "flac": FLAC, "m4a": MP4}
+        parser_cls = mutagen_classes.get(fmt)
+        audio = parser_cls(buf) if parser_cls else None
+        if audio is not None and audio.info is not None:
+            return AudioProperties(
+                duration_seconds=round(audio.info.length, 2),
+                sample_rate=getattr(audio.info, "sample_rate", 0),
+                channels=getattr(audio.info, "channels", 0),
+                format=fmt,
+                file_size_bytes=len(data),
+            )
+        # Fallback if mutagen can't parse
         return AudioProperties(
             duration_seconds=0.0,
             sample_rate=0,

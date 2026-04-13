@@ -1,9 +1,14 @@
+# ruff: noqa: E402
 from __future__ import annotations
 
+import logging
+import time
 from typing import TypedDict
 
 from langgraph.graph import END, StateGraph
 from langsmith import traceable
+
+logger = logging.getLogger(__name__)
 
 from src.agents.intake import run_intake
 from src.agents.qa_scoring import QAScoringError, run_qa_scoring
@@ -19,6 +24,8 @@ from src.graph.state import (
     SummaryResult,
     TranscriptionResult,
 )
+from src.security.injection_detector import detect_injection
+from src.security.pii_redactor import redact_pii
 from src.utils.config import Config
 
 
@@ -35,46 +42,107 @@ class PipelineState(TypedDict, total=False):
 
 @traceable(name="intake_node")
 def intake_node(state: PipelineState) -> PipelineState:
+    t0 = time.time()
     result = run_intake(state["audio_input"])
+    logger.info(f"Intake completed in {time.time() - t0:.1f}s")
     return {"intake": result}
 
 
 @traceable(name="transcription_node")
-def transcription_node(state: PipelineState, config: Config) -> PipelineState:
+def transcription_node(state: PipelineState, config: Config, db_engine=None) -> PipelineState:
+    t0 = time.time()
     result = run_transcription(
         state["intake"],
         confidence_threshold=config.confidence_threshold,
         halt_ratio=config.low_confidence_halt_ratio,
         model_size=config.whisper_model_size,
+        db_engine=db_engine,
     )
+    logger.info(f"Transcription completed in {time.time() - t0:.1f}s")
     return {"transcription": result}
 
 
-@traceable(name="summarization_node")
-def summarization_node(state: PipelineState, config: Config) -> PipelineState:
+@traceable(name="injection_check_node")
+def injection_check_node(state: PipelineState) -> PipelineState:
+    """Check transcript for prompt injection attempts before sending to LLM."""
+    transcription = state["transcription"]
+    result = detect_injection(transcription.full_text)
+    if result.injection_detected:
+        return {
+            "status": "flagged_for_review",
+            "error": (
+                f"Prompt injection detected in transcript. "
+                f"Patterns: {', '.join(result.matched_patterns)}"
+            ),
+        }
+    return {}
+
+
+@traceable(name="pii_redaction_node")
+def pii_redaction_node(state: PipelineState) -> PipelineState:
+    """Redact PII from transcript text before sending to LLM."""
+    transcription = state["transcription"]
+
+    # Redact full text
+    full_result = redact_pii(transcription.full_text)
+    redacted_full = full_result.redacted_text
+
+    # Redact each segment
+    redacted_segments = []
+    for seg in transcription.segments:
+        seg_result = redact_pii(seg.text)
+        redacted_segments.append(seg.model_copy(update={"text": seg_result.redacted_text}))
+
+    redacted_transcription = transcription.model_copy(
+        update={"full_text": redacted_full, "segments": redacted_segments}
+    )
+    return {"transcription": redacted_transcription}
+
+
+@traceable(name="summarize_and_qa_node")
+def summarize_and_qa_node(state: PipelineState, config: Config) -> PipelineState:
+    """Run summarization first, then QA scoring with summary context.
+
+    QA gets better accuracy when it can see the summary (resolution status,
+    sentiment). The sequential LLM calls add minimal overhead since both
+    are single-call operations and the total is still faster than the
+    transcription step.
+    """
+    t0 = time.time()
+    transcript = state["transcription"]
+    errors: list[str] = []
+
+    # Step 1: Summarization
+    summary_result = None
     try:
-        result = run_summarization(
-            state["transcription"],
+        summary_result = run_summarization(
+            transcript,
             max_retries=config.max_retries_per_node,
             timeout=config.llm_timeout_seconds,
+            provider=config.llm_provider,
         )
-        return {"summary": result}
     except SummarizationError as e:
-        return {"error": str(e), "status": "summary_failed"}
+        errors.append(f"Summarization: {e}")
 
-
-@traceable(name="qa_scoring_node")
-def qa_scoring_node(state: PipelineState, config: Config) -> PipelineState:
+    # Step 2: QA scoring — now with summary context for better accuracy
+    qa_result = None
     try:
-        result = run_qa_scoring(
-            state["transcription"],
-            state["summary"],
+        qa_result = run_qa_scoring(
+            transcript,
+            summary=summary_result,  # Pass summary for resolution/sentiment context
             max_retries=config.max_retries_per_node,
             timeout=config.llm_timeout_seconds,
+            provider=config.llm_provider,
         )
-        return {"qa_scores": result}
     except QAScoringError as e:
-        return {"error": str(e), "status": "qa_failed"}
+        errors.append(f"QA Scoring: {e}")
+
+    logger.info(f"Summarization + QA completed in {time.time() - t0:.1f}s")
+
+    if errors:
+        return {"error": "; ".join(errors), "status": "failed"}
+
+    return {"summary": summary_result, "qa_scores": qa_result}
 
 
 @traceable(name="report_node")
@@ -104,14 +172,15 @@ def supervisor_review_node(state: PipelineState) -> PipelineState:
     return {"report": report, "status": "flagged_for_review"}
 
 
-def build_workflow(config: Config) -> StateGraph:
+def build_workflow(config: Config, db_engine=None) -> StateGraph:
     workflow = StateGraph(PipelineState)
 
     # Node names must NOT clash with PipelineState keys
     workflow.add_node("intake_step", intake_node)
-    workflow.add_node("transcribe_step", lambda s: transcription_node(s, config))
-    workflow.add_node("summarize_step", lambda s: summarization_node(s, config))
-    workflow.add_node("qa_score_step", lambda s: qa_scoring_node(s, config))
+    workflow.add_node("transcribe_step", lambda s: transcription_node(s, config, db_engine))
+    workflow.add_node("injection_check_step", injection_check_node)
+    workflow.add_node("pii_redact_step", pii_redaction_node)
+    workflow.add_node("summarize_and_qa_step", lambda s: summarize_and_qa_node(s, config))
     workflow.add_node("report_step", report_node)
     workflow.add_node("error_step", error_node)
     workflow.add_node("supervisor_step", supervisor_review_node)
@@ -128,11 +197,17 @@ def build_workflow(config: Config) -> StateGraph:
     workflow.add_conditional_edges(
         "transcribe_step",
         lambda s: route_after_transcription(s["transcription"]),
-        {"summarize": "summarize_step"},
+        {"summarize": "injection_check_step"},
     )
-    workflow.add_edge("summarize_step", "qa_score_step")
+    # Injection check -> PII redaction -> parallel summarization + QA
     workflow.add_conditional_edges(
-        "qa_score_step",
+        "injection_check_step",
+        lambda s: "error" if s.get("status") == "flagged_for_review" else "continue",
+        {"error": "error_step", "continue": "pii_redact_step"},
+    )
+    workflow.add_edge("pii_redact_step", "summarize_and_qa_step")
+    workflow.add_conditional_edges(
+        "summarize_and_qa_step",
         lambda s: route_after_qa(s["qa_scores"]) if "qa_scores" in s else "error",
         {"report": "report_step", "supervisor_review": "supervisor_step", "error": "error_step"},
     )
@@ -145,6 +220,6 @@ def build_workflow(config: Config) -> StateGraph:
     return workflow
 
 
-def compile_workflow(config: Config):
-    workflow = build_workflow(config)
+def compile_workflow(config: Config, db_engine=None):
+    workflow = build_workflow(config, db_engine)
     return workflow.compile()

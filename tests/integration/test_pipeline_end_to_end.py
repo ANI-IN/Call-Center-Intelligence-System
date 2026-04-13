@@ -1,6 +1,4 @@
-import io
 import uuid
-import wave
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -15,6 +13,7 @@ from src.graph.state import (
 )
 from src.graph.workflow import compile_workflow
 from src.utils.config import Config
+from tests.conftest import make_wav_bytes
 
 
 def _make_test_config() -> Config:
@@ -22,11 +21,9 @@ def _make_test_config() -> Config:
         openai_api_key="test-key",
         langchain_api_key="test-key",
         langchain_project="test",
-        anthropic_api_key="",
         db_encryption_key="test-key",
         db_path=Path("test.db"),
-        gradio_username="test",
-        gradio_password="test",
+        llm_provider="openai",
         max_cost_per_call_usd=2.0,
         max_retries_per_node=3,
         llm_timeout_seconds=30,
@@ -36,20 +33,10 @@ def _make_test_config() -> Config:
     )
 
 
-def _make_wav_bytes() -> bytes:
-    buf = io.BytesIO()
-    with wave.open(buf, "wb") as wf:
-        wf.setnchannels(1)
-        wf.setsampwidth(2)
-        wf.setframerate(16000)
-        wf.writeframes(b"\x00\x00" * 16000)
-    return buf.getvalue()
-
-
 @pytest.mark.integration
 class TestPipelineEndToEnd:
-    @patch("src.agents.qa_scoring.ChatOpenAI")
-    @patch("src.agents.summarization.ChatOpenAI")
+    @patch("src.agents.qa_scoring.get_llm")
+    @patch("src.agents.summarization.get_llm")
     @patch("src.agents.transcription._get_whisper_model")
     def test_full_pipeline_happy_path(
         self,
@@ -66,18 +53,20 @@ class TestPipelineEndToEnd:
         seg1.start = 0.0
         seg1.end = 1.0
         seg1.avg_logprob = -0.1
+        seg1.no_speech_prob = 0.05
         seg2 = MagicMock()
         seg2.text = "I need help with billing."
         seg2.start = 1.0
         seg2.end = 3.0
         seg2.avg_logprob = -0.15
+        seg2.no_speech_prob = 0.05
         mock_info = MagicMock()
         mock_model.transcribe.return_value = (
             iter([seg1, seg2]),
             mock_info,
         )
 
-        # Mock summarization LLM
+        # Mock summarization LLM (get_llm returns the LLM directly)
         mock_sum = MagicMock()
         mock_summary_llm.return_value = mock_sum
         mock_sum.with_structured_output.return_value = mock_sum
@@ -109,9 +98,8 @@ class TestPipelineEndToEnd:
         config = _make_test_config()
         app = compile_workflow(config)
 
-        result = app.invoke(
-            {"audio_input": AudioInput(audio_data=_make_wav_bytes(), filename="test.wav")}
-        )
+        audio = AudioInput(audio_data=make_wav_bytes(duration_seconds=1.0), filename="test.wav")
+        result = app.invoke({"audio_input": audio})
 
         assert result["status"] == "completed"
         assert result["report"] is not None

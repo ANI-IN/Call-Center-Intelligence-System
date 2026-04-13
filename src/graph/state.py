@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 
 class AudioInput(BaseModel):
-    audio_data: bytes
+    audio_data: bytes = Field(exclude=True, repr=False)
     filename: str
     caller_id: str | None = None
     timestamp: datetime | None = None
@@ -73,7 +73,7 @@ class Entity(BaseModel):
 
 
 class SummaryResult(BaseModel):
-    call_id: uuid.UUID
+    call_id: uuid.UUID = Field(default_factory=uuid.uuid4)
     call_purpose: str
     key_discussion_points: list[str]
     action_items: list[ActionItem]
@@ -94,7 +94,7 @@ class ComplianceFlag(BaseModel):
 
 
 class QAScoreResult(BaseModel):
-    call_id: uuid.UUID
+    call_id: uuid.UUID = Field(default_factory=uuid.uuid4)
     professionalism: QADimensionScore
     empathy: QADimensionScore
     problem_resolution: QADimensionScore

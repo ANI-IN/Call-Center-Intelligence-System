@@ -1,6 +1,3 @@
-import io
-import wave
-
 import pytest
 
 from src.utils.audio import (
@@ -9,26 +6,15 @@ from src.utils.audio import (
     extract_audio_properties,
     validate_audio_file,
 )
+from tests.conftest import make_wav_bytes
 
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 MAX_DURATION = 3600  # 60 min
 
 
-def _make_wav_bytes(duration_seconds: float = 1.0, sample_rate: int = 16000) -> bytes:
-    """Create a minimal valid WAV file in memory."""
-    n_frames = int(sample_rate * duration_seconds)
-    buf = io.BytesIO()
-    with wave.open(buf, "wb") as wf:
-        wf.setnchannels(1)
-        wf.setsampwidth(2)
-        wf.setframerate(sample_rate)
-        wf.writeframes(b"\x00\x00" * n_frames)
-    return buf.getvalue()
-
-
 class TestDetectAudioFormat:
     def test_wav_magic_bytes(self) -> None:
-        wav_bytes = _make_wav_bytes()
+        wav_bytes = make_wav_bytes()
         assert detect_audio_format(wav_bytes) == "wav"
 
     def test_mp3_magic_bytes(self) -> None:
@@ -45,7 +31,7 @@ class TestDetectAudioFormat:
 
 class TestValidateAudioFile:
     def test_valid_wav(self) -> None:
-        wav_bytes = _make_wav_bytes(duration_seconds=5.0)
+        wav_bytes = make_wav_bytes(duration_seconds=5.0)
         result = validate_audio_file(wav_bytes, "test.wav")
         assert result.is_valid is True
         assert result.error is None
@@ -68,7 +54,7 @@ class TestValidateAudioFile:
 
 class TestExtractAudioProperties:
     def test_wav_properties(self) -> None:
-        wav_bytes = _make_wav_bytes(duration_seconds=2.0, sample_rate=16000)
+        wav_bytes = make_wav_bytes(duration_seconds=2.0, sample_rate=16000)
         props = extract_audio_properties(wav_bytes, "wav")
         assert props.format == "wav"
         assert props.sample_rate == 16000
