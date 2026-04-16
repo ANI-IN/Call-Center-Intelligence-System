@@ -113,3 +113,8 @@ class TestPipelineEndToEnd:
         )
 
         assert result["status"] == "failed"
+        # Regression: the actual reason from intake.validation_error must be
+        # surfaced to the user, not swallowed into a bare "Validation failed".
+        assert result["error"] != "Validation failed"
+        assert result["error"], "error message must not be empty"
+        assert "Unsupported" in result["error"] or "format" in result["error"].lower()

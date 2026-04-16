@@ -6,6 +6,7 @@ import gradio as gr
 
 from src.services.observability import get_observability_dashboard
 from src.ui.tabs.analyze import build_analyze_tab
+from src.ui.tabs.history import build_history_tab, wire_history_autoload
 from src.ui.tabs.observability import (
     build_observability_tab,
     wire_observability_autoload,
@@ -26,6 +27,10 @@ def build_app(config, workflow, engine, audit) -> gr.Blocks:
 
         with gr.Tab("Analyze Call"):
             build_analyze_tab(workflow, engine, audit)
+
+        with gr.Tab("All MP3 History") as history_tab:
+            history_table, call_ids_state = build_history_tab(engine)
+            wire_history_autoload(history_tab, history_table, call_ids_state, engine)
 
         with gr.Tab("Observability") as obs_tab:
             obs_metrics, obs_langsmith, obs_audit = build_observability_tab(

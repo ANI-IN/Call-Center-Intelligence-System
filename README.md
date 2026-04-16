@@ -18,7 +18,7 @@ Built with **LangGraph** orchestration, **faster-whisper** speech-to-text, and *
 [![Live Demo](https://img.shields.io/badge/HuggingFace-Live%20Demo-yellow)](https://huggingface.co/spaces/animeshkcm/call-center-intelligence)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/ANI-IN/Call-Center-Intelligence-System)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-101%20passed-green.svg)]()
+[![Tests](https://img.shields.io/badge/tests-113%20passed-green.svg)]()
 [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 
 ---
@@ -68,7 +68,7 @@ This project demonstrates real-world engineering challenges beyond "wrap an LLM 
 - **Security-first design** — PII redaction before LLM exposure, prompt injection detection in audio transcripts
 - **Production patterns** — Transcription caching, connection pooling, graceful degradation, structured logging
 - **Cost optimization** — Three LLM providers (paid + 2 free) switchable via single env var
-- **Clean architecture** — 36-line entrypoint, services layer, UI layer, 101 tests
+- **Clean architecture** — 36-line entrypoint, services layer, UI layer, 113 tests
 
 ### Technical Complexity
 
@@ -78,7 +78,7 @@ This project demonstrates real-world engineering challenges beyond "wrap an LLM 
 | Pydantic models | 14 typed data contracts |
 | LLM providers | 3 (OpenAI, Gemini, Groq) |
 | Security checks | 22 injection patterns + 4 PII types |
-| Test coverage | 101 tests across unit, integration, and security |
+| Test coverage | 113 tests across unit, integration, and security |
 | Architecture layers | 5 (UI, services, agents, graph, database) |
 
 ### The Engineering Challenge
@@ -290,7 +290,7 @@ faster-whisper auto-detects CUDA. No code changes needed — just set the model 
 | Web UI | **Gradio** | 2-tab interface (Analyze + Observability) |
 | Observability | **LangSmith** | Full trace logging |
 | PDF | **ReportLab** | Report generation |
-| Testing | **pytest** | 101 tests across unit, integration, security |
+| Testing | **pytest** | 113 tests across unit, integration, security |
 | Linting | **ruff + pre-commit** | Fast linting, secret scanning |
 
 ---
@@ -340,7 +340,7 @@ call-center-intelligence/
 |-- data/
 |   +-- samples/                    # 10 sample call center audio files (MP3)
 |
-|-- tests/                          # 101 tests
+|-- tests/                          # 113 tests
 |   |-- conftest.py                 #   Shared fixtures
 |   |-- unit/                       #   Agents, models, services, utils
 |   |-- integration/                #   End-to-end pipeline
@@ -389,7 +389,7 @@ Upload any of these to the app's "Analyze Call" tab to test the full pipeline.
 
 ```bash
 make test       # unit + security tests
-make test-all   # 101 tests: unit + integration + security
+make test-all   # 113 tests: unit + integration + security
 make lint       # ruff check
 make format     # auto-fix
 make run        # start app

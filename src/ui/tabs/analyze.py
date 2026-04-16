@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import logging
+
 import gradio as gr
 
 from src.services.pipeline import process_call
+
+logger = logging.getLogger(__name__)
 
 
 def build_analyze_tab(workflow, engine, audit) -> None:
@@ -12,7 +16,9 @@ def build_analyze_tab(workflow, engine, audit) -> None:
     with gr.Row():
         with gr.Column(scale=2):
             audio_input = gr.Audio(
-                type="numpy",
+                # filepath: avoids decoding/re-encoding to WAV which can blow a
+                # small MP3 past the 50MB intake limit.
+                type="filepath",
                 label="Upload or Record Audio",
                 sources=["upload", "microphone"],
             )
@@ -66,15 +72,33 @@ def build_analyze_tab(workflow, engine, audit) -> None:
             visible=True,
         )
 
-    def _hide_status():
-        return gr.update(visible=False)
-
     def _run_pipeline(audio, cid, dept):
+        logger.info(f"Analyze tab: running pipeline (caller={cid or '-'}, dept={dept or '-'})")
         result = process_call(audio, cid, dept, workflow, engine, audit)
         if not result.success:
-            gr.Warning(result.error)
-            return result.error, "", "", None, None
-        return result.transcript, result.summary_md, result.qa_md, result.json_path, result.pdf_path
+            error_text = result.error or "Unknown error"
+            logger.warning(f"Analyze tab: pipeline returned failure — {error_text}")
+            gr.Warning(error_text)
+            # Show error in the visible status banner; clear analysis fields so
+            # users do not see stale content from a previous run.
+            error_md = gr.update(
+                value=f"### Pipeline failed\n\n```\n{error_text}\n```",
+                visible=True,
+            )
+            return error_md, "", "", "", None, None
+        logger.info("Analyze tab: pipeline succeeded — rendering results")
+        success_md = gr.update(
+            value="**Analysis complete.** See transcript, summary, QA, and downloads below.",
+            visible=True,
+        )
+        return (
+            success_md,
+            result.transcript,
+            result.summary_md,
+            result.qa_md,
+            result.json_path,
+            result.pdf_path,
+        )
 
     analyze_btn.click(
         fn=_show_processing,
@@ -82,8 +106,5 @@ def build_analyze_tab(workflow, engine, audit) -> None:
     ).then(
         fn=_run_pipeline,
         inputs=[audio_input, caller_id, department],
-        outputs=[transcript_out, summary_out, qa_out, json_file, pdf_file],
-    ).then(
-        fn=_hide_status,
-        outputs=[status_msg],
+        outputs=[status_msg, transcript_out, summary_out, qa_out, json_file, pdf_file],
     )

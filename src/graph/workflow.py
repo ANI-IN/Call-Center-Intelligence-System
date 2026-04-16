@@ -158,7 +158,22 @@ def report_node(state: PipelineState) -> PipelineState:
 
 
 def error_node(state: PipelineState) -> PipelineState:
-    return {"status": "failed", "error": state.get("error", "Validation failed")}
+    """Terminal node for failures. Surfaces the most specific error available.
+
+    Failures originate in different places: intake stores its reason in
+    ``intake.validation_error`` (the IntakeResult), while later nodes set
+    ``state["error"]`` directly. The earlier shape was lost on the intake
+    path, leaving users with a bare "Validation failed" message.
+    """
+    error = state.get("error")
+    if not error:
+        intake = state.get("intake")
+        if intake is not None and getattr(intake, "validation_error", None):
+            error = intake.validation_error
+        else:
+            error = "Validation failed (no detail captured)"
+    logger.warning(f"Pipeline routed to error_step: {error}")
+    return {"status": "failed", "error": error}
 
 
 def supervisor_review_node(state: PipelineState) -> PipelineState:

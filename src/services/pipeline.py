@@ -56,29 +56,45 @@ def process_call(
 ) -> PipelineResult:
     """Process audio through the full pipeline. Returns structured result."""
     if audio_file is None:
+        logger.info("process_call: no audio provided")
         return PipelineResult(success=False, error="No file uploaded.")
 
     _cleanup_old_temp_files()
+    logger.info(f"process_call: received audio of type {type(audio_file).__name__}")
 
-    # Gradio type="numpy" returns (sample_rate, numpy_array)
+    # Gradio type="numpy" returns (sample_rate, numpy_array). We re-encode to a
+    # temp WAV so downstream agents see a real file. Note: this can balloon a
+    # small MP3 into a much larger WAV, so the UI now uses type="filepath" for
+    # uploads and we only hit this branch for microphone recordings.
     if isinstance(audio_file, tuple):
         import numpy as np
         import soundfile as sf
 
         sr, arr = audio_file
         if arr is None or (isinstance(arr, np.ndarray) and arr.size == 0):
+            logger.info("process_call: empty microphone recording")
             return PipelineResult(success=False, error="Empty audio recording.")
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
         sf.write(tmp.name, arr, sr)
         _temp_files.append(tmp.name)
         audio_file = tmp.name
+        logger.info(
+            f"process_call: wrote microphone audio to {tmp.name} "
+            f"({arr.size} samples @ {sr}Hz)"
+        )
 
     audio_path = Path(str(audio_file))
     if not audio_path.exists():
+        logger.warning(f"process_call: file not found at {audio_file}")
         return PipelineResult(success=False, error=f"File not found: {audio_file}")
 
     with open(audio_path, "rb") as f:
         audio_data = f.read()
+
+    logger.info(
+        f"process_call: invoking workflow with {audio_path.name} "
+        f"({len(audio_data)} bytes, caller={caller_id or '-'}, dept={department or '-'})"
+    )
 
     audio_input = AudioInput(
         audio_data=audio_data,
@@ -91,26 +107,37 @@ def process_call(
     try:
         result = workflow.invoke({"audio_input": audio_input})
     except Exception as e:
+        logger.exception("process_call: workflow.invoke raised an exception")
         return PipelineResult(success=False, error=f"Pipeline error: {e}")
 
     status = result.get("status", "unknown")
+    logger.info(f"process_call: workflow returned status={status}")
 
     if status == "failed":
-        error = result.get("error", "Unknown error")
+        error = result.get("error") or "Unknown error"
+        logger.warning(f"process_call: pipeline failed — {error}")
         audit.log(call_id="unknown", action="pipeline_failed", user="app", details={"error": error})
         return PipelineResult(success=False, error=f"Pipeline failed: {error}")
 
     report: CallReport | None = result.get("report")
     if report is None:
+        logger.warning("process_call: status was not 'failed' but no report was produced")
         return PipelineResult(success=False, error="No report generated.")
 
-    persist_report(report, engine=engine)
+    try:
+        persist_report(report, engine=engine)
+    except Exception:
+        logger.exception(
+            "process_call: persist_report failed (continuing to return result to user)"
+        )
+
     audit.log(
         call_id=str(report.call_id),
         action="completed",
         user="app",
         details={"status": status},
     )
+    logger.info(f"process_call: completed call_id={report.call_id}")
 
     # Format transcript
     lines = []
